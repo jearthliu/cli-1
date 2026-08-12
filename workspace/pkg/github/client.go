@@ -31,9 +31,14 @@ func (c *Client) GetIssues(owner, repo string, limit int) ([]Issue, error) {
 	var allIssues []Issue
 
 	// Per-page size. A non-positive limit means "no limit"; use a sane page
-	// size in that case so per_page is always valid.
+	// size in that case. GitHub caps per_page at 100, so clamp to avoid
+	// unnecessary round trips (a limit of 5000 would otherwise still fetch
+	// 100/page but iterate far more pages than needed).
 	perPage := limit
 	if perPage <= 0 {
+		perPage = 100
+	}
+	if perPage > 100 {
 		perPage = 100
 	}
 
